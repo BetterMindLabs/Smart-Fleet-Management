@@ -1,71 +1,56 @@
 import streamlit as st
 import pandas as pd
 import google.generativeai as genai
+from ml_models import predict_maintenance, predict_fuel
 
-# ----------------------
-# CONFIGURE GEMINI API
-# ----------------------
-genai.configure(api_key=st.secrets["API_KEY"])  
-model = genai.GenerativeModel("gemini-2.5-flash")
+# -------------------------------
+# Configure Gemini
+# -------------------------------
+genai.configure(api_key="YOUR_GEMINI_API_KEY")
+model = genai.GenerativeModel("gemini-pro")
 
-# ----------------------
-# STREAMLIT UI
-# ----------------------
-st.title("🚚 Smart Fleet Management System")
+st.title("🚚 Smart Fleet Management with ML & Gemini")
 
-st.markdown("""
-Manage your fleet intelligently — optimize routes, reduce maintenance costs, and lower emissions using AI.
-""")
+st.markdown("Intelligently predict maintenance, estimate fuel, and get AI-driven insights.")
 
-# --- Vehicle Data Entry
-with st.form("vehicle_form"):
-    vehicle_id = st.text_input("Vehicle ID or Name", "Truck-01")
-    vehicle_type = st.selectbox("Vehicle Type", ["Truck", "Van", "Bus", "Car"])
-    fuel_type = st.selectbox("Fuel Type", ["Diesel", "Petrol", "Electric", "Hybrid"])
-    last_maintenance_km = st.number_input("Km since last maintenance", min_value=0, max_value=100000, value=5000)
-    avg_daily_km = st.number_input("Average daily distance (km)", min_value=0, max_value=1000, value=100)
-    current_location = st.text_input("Current Location", "Warehouse A")
-    submit = st.form_submit_button("Analyze & Get Advice")
+# --- User input
+vehicle_id = st.text_input("Vehicle ID", "Truck-01")
+km_since_maintenance = st.number_input("Km since last maintenance", min_value=0, value=12000)
+avg_daily_km = st.number_input("Average daily km", min_value=0, value=100)
+last_maintenance_days = st.number_input("Days since last maintenance", min_value=0, value=180)
+fuel_consumption = st.number_input("Current fuel consumption (L/100km)", min_value=0.0, value=30.0)
 
-if submit:
-    with st.spinner("Analyzing fleet data..."):
-
-        # Prepare prompt for Gemini
+if st.button("Analyze Fleet Data"):
+    with st.spinner("Running ML predictions and AI analysis..."):
+        # ML predictions
+        maintenance_needed = predict_maintenance(km_since_maintenance, avg_daily_km, last_maintenance_days, fuel_consumption)
+        predicted_fuel = predict_fuel(km_since_maintenance, avg_daily_km, last_maintenance_days)
+        
+        # Gemini advice
         prompt = f"""
-        Act as an expert fleet management AI assistant.
+        Vehicle ID: {vehicle_id}
+        Km since maintenance: {km_since_maintenance}
+        Average daily km: {avg_daily_km}
+        Days since last maintenance: {last_maintenance_days}
+        Current fuel consumption: {fuel_consumption}
 
-        Vehicle Details:
-        - ID: {vehicle_id}
-        - Type: {vehicle_type}
-        - Fuel: {fuel_type}
-        - Km since last maintenance: {last_maintenance_km}
-        - Average daily distance: {avg_daily_km}
-        - Current location: {current_location}
+        Maintenance needed (ML prediction): {bool(maintenance_needed)}
+        Predicted fuel consumption next period: {predicted_fuel:.2f} L/100km.
 
-        Please suggest:
-        - Maintenance recommendation and urgency level.
-        - Fuel or energy consumption optimization tips.
-        - Emission impact and ways to reduce it.
-        - Route optimization suggestions for cost and efficiency.
-        Present these in a clear, bullet-point summary.
+        Suggest:
+        - Maintenance actions and urgency.
+        - Driving behavior improvements to reduce fuel consumption.
+        - Emission impact and tips to improve sustainability.
+        Give a clear, friendly bullet-point summary.
         """
 
         response = model.generate_content(prompt)
         advice = response.text
 
-        st.success("✅ AI Recommendations")
+        st.success("✅ ML Predictions & Gemini Recommendations")
+        st.markdown(f"**Maintenance Needed?** {'Yes' if maintenance_needed else 'No'}")
+        st.markdown(f"**Estimated Fuel Consumption:** {predicted_fuel:.2f} L/100km")
+        st.markdown("---")
         st.markdown(advice)
 
-# --- Simulated Fleet Table (optional demo)
-st.markdown("### 📊 Sample Fleet Overview")
-fleet_data = pd.DataFrame({
-    "Vehicle ID": ["Truck-01", "Van-03", "Bus-05"],
-    "Type": ["Truck", "Van", "Bus"],
-    "Fuel": ["Diesel", "Petrol", "Electric"],
-    "Km since last maintenance": [5000, 12000, 3000],
-    "Avg daily km": [100, 80, 60],
-    "Location": ["Warehouse A", "Depot B", "Garage C"],
-})
-st.dataframe(fleet_data)
-
-st.caption("♻️ Powered by Gemini API, Streamlit & Python")
+st.caption("♻️ Built with ML, Gemini API, and Streamlit")
