@@ -6,8 +6,8 @@ from ml_models import predict_maintenance, predict_fuel
 # -------------------------------
 # Configure Gemini
 # -------------------------------
-genai.configure(api_key="YOUR_GEMINI_API_KEY")
-model = genai.GenerativeModel("gemini-pro")
+genai.configure(api_key=st.secrets["API_KEY"])
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 st.title("🚚 Smart Fleet Management with ML & Gemini")
 
