@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 # -------------------------------
 # Load data
 # -------------------------------
-df = pd.read_csv("data/fleet_data.csv")
+df = pd.read_csv("data.csv")
 
 # -------------------------------
 # Maintenance Prediction
